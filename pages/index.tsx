@@ -54,9 +54,10 @@ export default function Home() {
         onAuthStateChanged(auth, (user) => {
             setError(false)
             if (user) {
-                setEmail(user.email as string)
+                setUserEmail(user.email as string)
                 setAuthorized(true)
                 setValidated(true)
+                setEmail('')
                 setOTP('')
                 setCode('')
             } else {
