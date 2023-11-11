@@ -6,38 +6,35 @@ export default function Home() {
     const [email, setEmail] = useState('')
     const [otp, setOTP] = useState('')
     const [userEmail, setUserEmail] = useState('')
-    const [code, setCode] = useState('')
     const [error, setError] = useState(false)
     const [authorized, setAuthorized] = useState(false)
     const [validated, setValidated] = useState(false)
     async function authorize() {
-        const res = await fetch('https://hhh-b0mh.onrender.com/sendOTP', {
+        console.log(email)
+        await fetch('http://orca-app-r4hba.ondigitalocean.app/api/v1/auth/send', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
             },
             body: JSON.stringify({ email })
         })
-        const data = await res.json()
-        setCode(`${data.otp}`)
         setAuthorized(true)
     }
     async function validate() {
-        if (otp != code) {
-            setError(true)
-            return
-        }
-        const res = await fetch('https://hhh-b0mh.onrender.com/auth', {
+        const res = await fetch('https://orca-app-r4hba.ondigitalocean.app/api/v1/auth', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': 'https://orca-app-r4hba.ondigitalocean.app'
             },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email, otp })
         })
         const data = await res.json()
         await signInWithCustomToken(auth, data.token)
             .then(res => {
                 setEmail('')
+                console.log(res.user)
                 setUserEmail(res.user.email as string)
             })
             .catch(e => {
@@ -59,13 +56,11 @@ export default function Home() {
                 setValidated(true)
                 setEmail('')
                 setOTP('')
-                setCode('')
             } else {
                 setEmail('')
                 setAuthorized(false)
                 setValidated(false)
                 setOTP('')
-                setCode('')
             }
         })
     }, [])
