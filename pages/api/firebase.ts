@@ -2,12 +2,12 @@ import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCWV1mtd8rNWATwqQGvuA2rnf8oxNlKNc8',
-  authDomain: 'onesim-e83f3.firebaseapp.com',
-  projectId: 'onesim-e83f3',
-  storageBucket: 'onesim-e83f3.appspot.com',
-  messagingSenderId: '730419349170',
-  appId: '1:730419349170:web:2a5fc0d71f838b01a46bab'
+  apiKey: 'AIzaSyBXJSrRgAw1jOHA9bz7_2S1LUjlzm9xeMk',
+  authDomain: 'onesim-co.firebaseapp.com',
+  projectId: 'onesim-co',
+  storageBucket: 'onesim-co.appspot.com',
+  messagingSenderId: '687444188661',
+  appId: '1:687444188661:web:258641b306f2f64b6094bc'
 }
 
 const app = initializeApp(firebaseConfig)

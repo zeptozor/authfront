@@ -1,85 +1,62 @@
-import { onAuthStateChanged, signInWithCustomToken, signOut } from "firebase/auth"
-import { useEffect, useState } from "react"
+import { signInWithCustomToken, signOut } from "firebase/auth"
 import { auth } from "./api/firebase"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
+import { changeAttempted, changeEmail, changeOTP, changeToken } from "@/store/reducers/auth"
 
 export default function Home() {
-    const [email, setEmail] = useState('')
-    const [otp, setOTP] = useState('')
-    const [userEmail, setUserEmail] = useState('')
-    const [error, setError] = useState(false)
-    const [authorized, setAuthorized] = useState(false)
-    const [validated, setValidated] = useState(false)
+    const dispatch = useAppDispatch()
+    const { email, otp, attempted, token } = useAppSelector(store => store.auth)
     async function authorize() {
-        console.log(email)
-        await fetch('http://orca-app-r4hba.ondigitalocean.app/api/v1/auth/send', {
+        await fetch('/api/v1/auth/send', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ email })
         })
-        setAuthorized(true)
+        dispatch(changeAttempted(true))
     }
     async function validate() {
-        const res = await fetch('https://orca-app-r4hba.ondigitalocean.app/api/v1/auth', {
+        const res = await fetch('/api/v1/auth', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://orca-app-r4hba.ondigitalocean.app'
             },
             body: JSON.stringify({ email, otp })
         })
         const data = await res.json()
         await signInWithCustomToken(auth, data.token)
-            .then(res => {
-                setEmail('')
-                console.log(res.user)
-                setUserEmail(res.user.email as string)
+            .then(async res => {
+                dispatch(changeToken(await res.user.getIdToken()))
             })
             .catch(e => {
-                setError(true)
+                dispatch(changeToken(''))
                 console.log('validate', e)
             })
-        setValidated(true)
-        setOTP('')
     }
-    function logout() {
-        signOut(auth)
-    }
-    useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
-            setError(false)
-            if (user) {
-                setUserEmail(user.email as string)
-                setAuthorized(true)
-                setValidated(true)
-                setEmail('')
-                setOTP('')
-            } else {
-                setEmail('')
-                setAuthorized(false)
-                setValidated(false)
-                setOTP('')
+    async function userInfo() {
+        const res = await fetch('/api/v1/user', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
         })
-    }, [])
+        console.log('userInfo', await res.json())
+    }
+    async function logout() {
+        await signOut(auth)
+    }
     return (
         <div className="w-screen h-screen flex relative items-center justify-center">
-            <div className="absolute w-1/3 top-[20px] flex flex-col gap-[5px]">
-                {
-                    error && <div className="w-full rounded-[10px] bg-[#C43333] p-[12px] text-white">Что-то пошло не так</div>
-                }
-            </div>
             {
-                !validated
+                token == ''
                     ?
-                    !authorized
+                    !attempted
                         ?
                         (
                             <div className="w-1/3 flex flex-col gap-[20px] p-[20px] rounded-[10px] bg-[#F6F7F9]">
                                 <p className="text-[28px] font-semibold leading-[120%]">Авторизация</p>
-                                <input className="outline-none bg-inherit rounded-[10px] p-[10px] border-2 border-[#EEF0F4] focus:border-[#F90] hover:border-[#F90] placeholder:text-black" placeholder="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                <input className="outline-none bg-inherit rounded-[10px] p-[10px] border-2 border-[#EEF0F4] focus:border-[#F90] hover:border-[#F90] placeholder:text-black" placeholder="Email" type="email" value={email} onChange={(e) => dispatch(changeEmail(e.target.value))} />
                                 <div className="w-full rounded-[10px] bg-[#F90] flex justify-center p-[12px] text-white" onClick={authorize}>Авторизоваться</div>
                             </div>
                         )
@@ -87,14 +64,14 @@ export default function Home() {
                         (
                             <div className="w-1/3 flex flex-col gap-[20px] p-[20px] rounded-[10px] bg-[#F6F7F9]">
                                 <p className="text-[28px] font-semibold leading-[120%]">Введите код, который мы отправили на {email}</p>
-                                <input className="outline-none bg-inherit rounded-[10px] p-[10px] border-2 border-[#EEF0F4] focus:border-[#F90] hover:border-[#F90] placeholder:text-black" placeholder="Шестизначный код" type="text" value={otp} onChange={(e) => setOTP(e.target.value)} />
+                                <input className="outline-none bg-inherit rounded-[10px] p-[10px] border-2 border-[#EEF0F4] focus:border-[#F90] hover:border-[#F90] placeholder:text-black" placeholder="Шестизначный код" type="text" value={otp} onChange={(e) => dispatch(changeOTP(e.target.value))} />
                                 <div className="w-full rounded-[10px] bg-[#F90] flex justify-center p-[12px] text-white" onClick={validate}>Подтвердить</div>
                             </div>
                         )
                 :
                 (
                     <div className="w-1/3 flex flex-col gap-[20px] p-[20px] rounded-[10px] bg-[#F6F7F9]">
-                        <p className="text-[28px] font-semibold leading-[120%]">{userEmail}</p>
+                        <p className="text-[28px] font-semibold leading-[120%]" onClick={userInfo}>fetch user data</p>
                         <div className="w-full rounded-[10px] bg-[#F90] flex justify-center p-[12px] text-white" onClick={logout}>Выйти</div>
                     </div>
                 )
